@@ -1,0 +1,78 @@
+﻿@{
+    ViewData["Title"] = "Registro de Personal";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white text-center">
+                <h3>Registro Nuevo Usuario</h3>
+            </div>
+            <div class="card-body">
+                <form id="formRegistro">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" id="regNombre" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Usuario</label>
+                        <input type="text" id="regUsuario" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="regEmail" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" id="regPass" class="form-control" required />
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Registrar Usuario</button>
+                    </div>
+                </form>
+                <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+                <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("formRegistro").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const datos = {
+            Nombre: document.getElementById("regNombre").value,
+            NombreUsuario: document.getElementById("regUsuario").value,
+            Email: document.getElementById("regEmail").value,
+            Contrasena: document.getElementById("regPass").value,
+            RolId: 2 // Por defecto creamos empleados
+        };
+
+        try {
+            const respuesta = await fetch('/api/auth/registro', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            if (respuesta.ok) {
+                document.getElementById("mensajeError").style.display = "none";
+                document.getElementById("mensajeExito").innerText = "Usuario creado exitosamente. Redirigiendo...";
+                document.getElementById("mensajeExito").style.display = "block";
+
+                setTimeout(() => {
+                    window.location.href = "/Home/Login";
+                }, 2000);
+            } else {
+                const errorData = await respuesta.text(); // Leemos el error del servidor
+                document.getElementById("mensajeError").innerText = "Error: " + errorData;
+                document.getElementById("mensajeError").style.display = "block";
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error de conexión.");
+        }
+    });
+</script>

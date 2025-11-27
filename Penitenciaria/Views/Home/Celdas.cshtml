@@ -1,0 +1,149 @@
+﻿@{
+    ViewData["Title"] = "Gestión de Celdas";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Gestión de Pabellones y Celdas</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            Nueva Celda
+        </div>
+        <div class="card-body">
+            <form id="formCelda" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Número/Nombre de Celda</label>
+                    <input type="text" class="form-control" id="txtNumero" placeholder="Ej: A-101" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Capacidad de Reos</label>
+                    <input type="number" class="form-control" id="txtCapacidad" min="1" max="50" value="4" required>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-success">Guardar Celda</button>
+                </div>
+            </form>
+            <div id="alerta" class="alert alert-info mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            Listado de Celdas
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Número</th>
+                        <th>Capacidad</th>
+                        <th>Ocupación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaCeldas">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // URL Base de la API
+    const API_URL = '/api/celdas';
+
+    // Función para obtener el token guardado en el Login
+    function obtenerToken() {
+        return localStorage.getItem("tokenPenitenciaria");
+    }
+
+    // 1. Cargar celdas al iniciar la página
+    document.addEventListener("DOMContentLoaded", cargarCeldas);
+
+    async function cargarCeldas() {
+        const token = obtenerToken();
+        if (!token) {
+            window.location.href = "/Home/Login"; // Si no hay token, mandar al login
+            return;
+        }
+
+        try {
+            const respuesta = await fetch(API_URL, {
+                headers: { 'Authorization': 'Bearer ' + token } // ¡IMPORTANTE! Enviamos el token
+            });
+
+            if (respuesta.status === 401) {
+                alert("Sesión expirada");
+                window.location.href = "/Home/Login";
+                return;
+            }
+
+            const celdas = await respuesta.json();
+            const tabla = document.getElementById("tablaCeldas");
+            tabla.innerHTML = ""; // Limpiar tabla
+
+            celdas.forEach(celda => {
+                // Lógica simple para ver si está llena
+                const claseEstado = celda.ocupacionActual >= celda.capacidad ? "text-danger fw-bold" : "text-success";
+                const textoEstado = celda.ocupacionActual >= celda.capacidad ? "LLENA" : "DISPONIBLE";
+
+                const fila = `
+                    <tr>
+                        <td>${celda.celdaID}</td>
+                        <td>${celda.numeroCelda}</td>
+                        <td>${celda.capacidad}</td>
+                        <td>${celda.ocupacionActual}</td>
+                        <td class="${claseEstado}">${textoEstado}</td>
+                    </tr>
+                `;
+                tabla.innerHTML += fila;
+            });
+
+        } catch (error) {
+            console.error("Error cargando celdas:", error);
+        }
+    }
+
+    // 2. Guardar nueva celda
+    document.getElementById("formCelda").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const token = obtenerToken();
+        const alerta = document.getElementById("alerta");
+
+        const datos = {
+            NumeroCelda: document.getElementById("txtNumero").value,
+            Capacidad: parseInt(document.getElementById("txtCapacidad").value)
+        };
+
+        try {
+            const respuesta = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(datos)
+            });
+
+            if (respuesta.ok) {
+                alerta.className = "alert alert-success mt-3";
+                alerta.innerText = "Celda agregada correctamente.";
+                alerta.style.display = "block";
+                document.getElementById("formCelda").reset();
+                cargarCeldas(); // Recargar la tabla
+            } else {
+                const errorTxt = await respuesta.text();
+                alerta.className = "alert alert-danger mt-3";
+                alerta.innerText = "Error: " + errorTxt;
+                alerta.style.display = "block";
+            }
+        } catch (error) {
+            alerta.innerText = "Error de conexión.";
+            alerta.style.display = "block";
+        }
+
+        // Ocultar alerta a los 3 segundos
+        setTimeout(() => { alerta.style.display = 'none'; }, 3000);
+    });
+</script>

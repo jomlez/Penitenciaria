@@ -1,0 +1,181 @@
+﻿@{
+    ViewData["Title"] = "Gestión de Reos";
+}
+
+<div class="container mt-4">
+    <button class="btn btn-warning mb-3" data-bs-toggle="modal" data-bs-target="#modalCrimen">
+        + Nuevo Tipo de Crimen
+    </button>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-danger text-white">Ingreso de Reo</div>
+        <div class="card-body">
+            <form id="formReo">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Nombre</label>
+                        <input type="text" id="txtNombre" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Apellido</label>
+                        <input type="text" id="txtApellido" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>F. Nacimiento</label>
+                        <input type="date" id="txtNacimiento" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Sentencia (Años)</label>
+                        <input type="number" id="txtSentencia" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Asignar Celda</label>
+                        <select id="selectCelda" class="form-select" required>
+                            <option value="">Cargando celdas...</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="fw-bold">Seleccione los Crímenes Imputados:</label>
+                        <div id="listaCrimenes" class="border p-2" style="max-height: 150px; overflow-y: auto;">
+                            <span class="text-muted">Cargando catálogo...</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger w-100">Registrar Reo</button>
+            </form>
+            <div id="alertaReo" class="alert mt-2" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <h4>Población Penitenciaria</h4>
+            <table class="table table-striped">
+                <thead><tr><th>Nombre</th><th>Celda</th><th>Sentencia</th><th>Estado</th></tr></thead>
+                <tbody id="tablaReos"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCrimen" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Nuevo Crimen</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="text" id="crimeNombre" class="form-control mb-2" placeholder="Nombre (Ej: Robo)">
+                <input type="number" id="crimeMin" class="form-control mb-2" placeholder="Pena Mínima">
+                <input type="number" id="crimeMax" class="form-control mb-2" placeholder="Pena Máxima">
+                <button onclick="guardarCrimen()" class="btn btn-primary w-100">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem("tokenPenitenciaria");
+
+    document.addEventListener("DOMContentLoaded", function() {
+        cargarCombos();
+        cargarReos();
+    });
+
+    async function cargarCombos() {
+        // Cargar Celdas
+        const resCeldas = await fetch('/api/celdas', { headers: { 'Authorization': 'Bearer ' + token } });
+        const celdas = await resCeldas.json();
+        const select = document.getElementById("selectCelda");
+        select.innerHTML = '<option value="">Seleccione Celda...</option>';
+        celdas.forEach(c => {
+            // Solo mostramos celdas con espacio
+            if(c.ocupacionActual < c.capacidad) {
+                select.innerHTML += `<option value="${c.celdaID}">${c.numeroCelda} (Libres: ${c.capacidad - c.ocupacionActual})</option>`;
+            }
+        });
+
+        // Cargar Crímenes
+        cargarListaCrimenes();
+    }
+
+    async function cargarListaCrimenes() {
+        const resCrim = await fetch('/api/crimenes', { headers: { 'Authorization': 'Bearer ' + token } });
+        const crimenes = await resCrim.json();
+        const div = document.getElementById("listaCrimenes");
+        div.innerHTML = "";
+        crimenes.forEach(c => {
+            div.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input chk-crimen" type="checkbox" value="${c.crimenID}" id="cr_${c.crimenID}">
+                    <label class="form-check-label" for="cr_${c.crimenID}">${c.nombreCrimen}</label>
+                </div>`;
+        });
+    }
+
+    // Guardar nuevo Crimen
+    async function guardarCrimen() {
+        const datos = {
+            NombreCrimen: document.getElementById("crimeNombre").value,
+            Descripcion: "...",
+            PenaMinimaAnios: parseInt(document.getElementById("crimeMin").value),
+            PenaMaximaAnios: parseInt(document.getElementById("crimeMax").value)
+        };
+        await fetch('/api/crimenes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(datos)
+        });
+        alert("Crimen creado");
+        cargarListaCrimenes(); // Recargar la lista
+    }
+
+    // Guardar Reo
+    document.getElementById("formReo").addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        // Obtener IDs de crimenes seleccionados
+        const checkboxes = document.querySelectorAll('.chk-crimen:checked');
+        const idsCrimenes = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        if(idsCrimenes.length === 0) {
+            alert("Debe seleccionar al menos un crimen.");
+            return;
+        }
+
+        const datos = {
+            Nombre: document.getElementById("txtNombre").value,
+            Apellido: document.getElementById("txtApellido").value,
+            FechaNacimiento: document.getElementById("txtNacimiento").value,
+            SentenciaTotalAnios: parseInt(document.getElementById("txtSentencia").value),
+            CeldaID: parseInt(document.getElementById("selectCelda").value),
+            CrimenIds: idsCrimenes
+        };
+
+        const res = await fetch('/api/reos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(datos)
+        });
+
+        if(res.ok) {
+            alert("Reo registrado exitosamente");
+            cargarReos();
+            cargarCombos();
+            document.getElementById("formReo").reset();
+        } else {
+            const mensajeError = await res.text();
+            console.error(mensajeError);
+            alert("Error del servidor: " + mensajeError); 
+        }
+    });
+
+    async function cargarReos() {
+        const res = await fetch('/api/reos', { headers: { 'Authorization': 'Bearer ' + token } });
+        const reos = await res.json();
+        const tabla = document.getElementById("tablaReos");
+        tabla.innerHTML = "";
+        reos.forEach(r => {
+            tabla.innerHTML += `<tr><td>${r.nombreCompleto}</td><td>${r.celda}</td><td>${r.sentencia} años</td><td>${r.estado}</td></tr>`;
+        });
+    }
+</script>
