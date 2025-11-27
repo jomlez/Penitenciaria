@@ -14,7 +14,6 @@ namespace Penitenciaria.Repositorios
             _contexto = contexto;
         }
 
-        // 1. Obtener usuario por Nombre de Usuario
         public async Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario)
         {
             return await _contexto.Usuarios
@@ -22,7 +21,6 @@ namespace Penitenciaria.Repositorios
                 .FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario);
         }
 
-        // 2. Obtener usuario por Email
         public async Task<Usuario?> ObtenerPorEmailAsync(string email)
         {
             return await _contexto.Usuarios
@@ -30,7 +28,6 @@ namespace Penitenciaria.Repositorios
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        // 3. Agregar un nuevo usuario
         public async Task<Usuario> AgregarAsync(Usuario usuario)
         {
             usuario.ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuario.ContrasenaHash);
@@ -40,7 +37,6 @@ namespace Penitenciaria.Repositorios
             return usuario;
         }
 
-        // 4. Validar contraseña
         public bool ValidarContrasena(Usuario usuario, string contrasenaPlana)
         {
             if (string.IsNullOrEmpty(contrasenaPlana) || string.IsNullOrEmpty(usuario.ContrasenaHash))
@@ -50,13 +46,11 @@ namespace Penitenciaria.Repositorios
             return BCrypt.Net.BCrypt.Verify(contrasenaPlana, usuario.ContrasenaHash);
         }
 
-        // 5. Guardar cambios generales
         public async Task GuardarCambiosAsync()
         {
             await _contexto.SaveChangesAsync();
         }
 
-        // 6. Obtener por Token de Refresco
         public async Task<Usuario?> ObtenerPorTokenRefrescoAsync(string tokenRefresco)
         {
             return await _contexto.Usuarios

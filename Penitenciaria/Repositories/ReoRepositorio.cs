@@ -12,27 +12,25 @@ namespace Penitenciaria.Repositorios
         public async Task<IEnumerable<Reo>> ObtenerTodosAsync()
         {
             return await _contexto.Reos
-                .Include(r => r.Celda) // Incluir datos de la celda
+                .Include(r => r.Celda)
                 .ToListAsync();
         }
 
         public async Task CrearReoConCrimenesAsync(Reo reo, List<int> crimenIds)
         {
-            // 1. Obtenemos la estrategia de ejecución (Obligatorio por EnableRetryOnFailure)
+
             var strategy = _contexto.Database.CreateExecutionStrategy();
 
-            // 2. Ejecutamos la transacción DENTRO de la estrategia
+
             await strategy.ExecuteAsync(async () =>
             {
-                // Aquí empieza la transacción manual como antes
+
                 using var transaccion = await _contexto.Database.BeginTransactionAsync();
                 try
                 {
-                    // A. Guardar al Reo
-                    await _contexto.Reos.AddAsync(reo);
-                    await _contexto.SaveChangesAsync(); // Aquí se genera el ID del Reo
 
-                    // B. Guardar la relación Reo-Crimen
+                    await _contexto.Reos.AddAsync(reo);
+                    await _contexto.SaveChangesAsync(); 
                     if (crimenIds != null && crimenIds.Any())
                     {
                         foreach (var crimenId in crimenIds)
@@ -47,7 +45,6 @@ namespace Penitenciaria.Repositorios
                         }
                     }
 
-                    // C. Actualizar Ocupación de la Celda
                     var celda = await _contexto.Celdas.FindAsync(reo.CeldaID);
                     if (celda != null)
                     {
@@ -56,14 +53,12 @@ namespace Penitenciaria.Repositorios
 
                     await _contexto.SaveChangesAsync();
 
-                    // Confirmamos la transacción
                     await transaccion.CommitAsync();
                 }
                 catch
                 {
-                    // Si algo falla, deshacemos todo
                     await transaccion.RollbackAsync();
-                    throw; // Importante: avisar al controlador que falló
+                    throw;
                 }
             });
         }

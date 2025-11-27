@@ -12,7 +12,6 @@ namespace Penitenciaria.Dtos
         public int Capacidad { get; set; }
     }
 
-    // Este lo usaremos para enviar la lista al frontend
     public class CeldaDto
     {
         public int CeldaID { get; set; }

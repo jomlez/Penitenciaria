@@ -7,7 +7,7 @@ namespace Penitenciaria.Modelos
     {
         [Key]
         public int Id { get; set; }
-        public string Nombre { get; set; } = string.Empty; // Ej: Admin, Empleado
-        public ICollection<Usuario> Usuario { get; set; } // Relación 1:N
+        public string Nombre { get; set; } = string.Empty;
+        public ICollection<Usuario> Usuario { get; set; }
     }
 }

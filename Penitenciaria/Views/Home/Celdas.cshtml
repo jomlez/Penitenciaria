@@ -50,27 +50,24 @@
 </div>
 
 <script>
-    // URL Base de la API
     const API_URL = '/api/celdas';
 
-    // Función para obtener el token guardado en el Login
     function obtenerToken() {
         return localStorage.getItem("tokenPenitenciaria");
     }
 
-    // 1. Cargar celdas al iniciar la página
     document.addEventListener("DOMContentLoaded", cargarCeldas);
 
     async function cargarCeldas() {
         const token = obtenerToken();
         if (!token) {
-            window.location.href = "/Home/Login"; // Si no hay token, mandar al login
+            window.location.href = "/Home/Login";
             return;
         }
 
         try {
             const respuesta = await fetch(API_URL, {
-                headers: { 'Authorization': 'Bearer ' + token } // ¡IMPORTANTE! Enviamos el token
+                headers: { 'Authorization': 'Bearer ' + token }
             });
 
             if (respuesta.status === 401) {
@@ -81,10 +78,9 @@
 
             const celdas = await respuesta.json();
             const tabla = document.getElementById("tablaCeldas");
-            tabla.innerHTML = ""; // Limpiar tabla
+            tabla.innerHTML = "";
 
             celdas.forEach(celda => {
-                // Lógica simple para ver si está llena
                 const claseEstado = celda.ocupacionActual >= celda.capacidad ? "text-danger fw-bold" : "text-success";
                 const textoEstado = celda.ocupacionActual >= celda.capacidad ? "LLENA" : "DISPONIBLE";
 
@@ -105,7 +101,6 @@
         }
     }
 
-    // 2. Guardar nueva celda
     document.getElementById("formCelda").addEventListener("submit", async function(e) {
         e.preventDefault();
         const token = obtenerToken();
@@ -131,7 +126,7 @@
                 alerta.innerText = "Celda agregada correctamente.";
                 alerta.style.display = "block";
                 document.getElementById("formCelda").reset();
-                cargarCeldas(); // Recargar la tabla
+                cargarCeldas(); 
             } else {
                 const errorTxt = await respuesta.text();
                 alerta.className = "alert alert-danger mt-3";
@@ -143,7 +138,6 @@
             alerta.style.display = "block";
         }
 
-        // Ocultar alerta a los 3 segundos
         setTimeout(() => { alerta.style.display = 'none'; }, 3000);
     });
 </script>
