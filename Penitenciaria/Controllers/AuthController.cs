@@ -17,12 +17,15 @@ namespace Penitenciaria.Controllers
     {
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly ConfiguracionJwt _configuracionJwt;
+
+        // Inyectamos el Repositorio y la Configuración del JWT
         public AuthController(IUsuarioRepositorio usuarioRepositorio, IOptions<ConfiguracionJwt> configuracionJwt)
         {
             _usuarioRepositorio = usuarioRepositorio;
             _configuracionJwt = configuracionJwt.Value;
         }
 
+        // POST: api/auth/registro
         [HttpPost("registro")]
         public async Task<IActionResult> Registrar([FromBody] RegistroDto modelo)
         {

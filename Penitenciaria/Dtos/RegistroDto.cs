@@ -16,6 +16,8 @@ namespace Penitenciaria.Dtos
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
         public string Contrasena { get; set; } = string.Empty;
+
+        // Por defecto, asignaremos un Rol (ej. 2 para Usuario/Empleado)
         public int RolId { get; set; } = 2;
     }
 }

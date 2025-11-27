@@ -12,7 +12,7 @@ namespace Penitenciaria.Repositorios
         public async Task<IEnumerable<Reo>> ObtenerTodosAsync()
         {
             return await _contexto.Reos
-                .Include(r => r.Celda)
+                .Include(r => r.Celda) // Incluir datos de la celda
                 .ToListAsync();
         }
 

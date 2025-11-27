@@ -16,6 +16,8 @@ namespace Penitenciaria.Modelos
 
         public int? PenaMinimaAnios { get; set; }
         public int? PenaMaximaAnios { get; set; }
+
+        // Relación inversa para saber cuántos reos cometieron este crimen
         public ICollection<ReoCrimen> ReoCrimenes { get; set; } = new List<ReoCrimen>();
     }
 }

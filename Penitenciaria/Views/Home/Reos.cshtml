@@ -82,16 +82,19 @@
     });
 
     async function cargarCombos() {
+        // Cargar Celdas
         const resCeldas = await fetch('/api/celdas', { headers: { 'Authorization': 'Bearer ' + token } });
         const celdas = await resCeldas.json();
         const select = document.getElementById("selectCelda");
         select.innerHTML = '<option value="">Seleccione Celda...</option>';
         celdas.forEach(c => {
+            // Solo mostramos celdas con espacio
             if(c.ocupacionActual < c.capacidad) {
                 select.innerHTML += `<option value="${c.celdaID}">${c.numeroCelda} (Libres: ${c.capacidad - c.ocupacionActual})</option>`;
             }
         });
 
+        // Cargar Crímenes
         cargarListaCrimenes();
     }
 
@@ -109,6 +112,7 @@
         });
     }
 
+    // Guardar nuevo Crimen
     async function guardarCrimen() {
         const datos = {
             NombreCrimen: document.getElementById("crimeNombre").value,
@@ -122,12 +126,14 @@
             body: JSON.stringify(datos)
         });
         alert("Crimen creado");
-        cargarListaCrimenes();
+        cargarListaCrimenes(); // Recargar la lista
     }
 
+    // Guardar Reo
     document.getElementById("formReo").addEventListener("submit", async function(e) {
         e.preventDefault();
 
+        // Obtener IDs de crimenes seleccionados
         const checkboxes = document.querySelectorAll('.chk-crimen:checked');
         const idsCrimenes = Array.from(checkboxes).map(cb => parseInt(cb.value));
 

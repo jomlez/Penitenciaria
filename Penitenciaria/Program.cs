@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Penitenciaria.Datos;
-using Penitenciaria.Modelos.Configuraciones;
+using Penitenciaria.Modelos.Configuraciones; // Asegúrate de que el namespace coincida con tus carpetas
 using Penitenciaria.Repositorios;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. Configuración de Base de Datos (SQL Server)
 var connectionString = builder.Configuration.GetConnectionString("ConexionDefault");
 builder.Services.AddDbContext<PenitenciariaDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
@@ -15,11 +16,13 @@ builder.Services.AddDbContext<PenitenciariaDbContext>(options =>
         sqlOptions.EnableRetryOnFailure(); 
     }));
 
+// 2. Inyección de Dependencias
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<ICeldaRepositorio, CeldaRepositorio>();
 builder.Services.AddScoped<ICrimenRepositorio, CrimenRepositorio>();
 builder.Services.AddScoped<IReoRepositorio, ReoRepositorio>();
 
+// 3. Configuración de JWT
 var seccionJwt = builder.Configuration.GetSection("ConfiguracionJwt");
 builder.Services.Configure<ConfiguracionJwt>(seccionJwt);
 
@@ -33,7 +36,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; 
+    options.RequireHttpsMetadata = false; // Pon en true si usas HTTPS en producción
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -48,10 +51,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Agregar servicios Razor Pages (proyecto Razor Pages)
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+// Pipeline de peticiones HTTP
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -60,6 +65,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// ... código anterior ...
 
 app.UseRouting();
 

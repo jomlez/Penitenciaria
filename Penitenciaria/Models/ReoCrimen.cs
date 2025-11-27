@@ -8,16 +8,21 @@ namespace Penitenciaria.Modelos
         [Key]
         public int ReoCrimenID { get; set; }
 
+        // Clave Foránea hacia Reo
         [Required]
         public int ReoID { get; set; }
 
         [ForeignKey("ReoID")]
-        public virtual Reo? Reo { get; set; } 
+        public virtual Reo? Reo { get; set; } // Propiedad de navegación opcional
+
+        // Clave Foránea hacia Crimen
         [Required]
         public int CrimenID { get; set; }
 
         [ForeignKey("CrimenID")]
-        public virtual Crimen? Crimen { get; set; }
+        public virtual Crimen? Crimen { get; set; } // Propiedad de navegación opcional
+
+        // Dato extra específico de esta relación
         public DateTime? FechaComision { get; set; }
     }
 }

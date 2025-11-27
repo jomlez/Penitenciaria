@@ -10,6 +10,6 @@ namespace Penitenciaria.Modelos
         public int Capacidad { get; set; }
         public int OcupacionActual { get; set; } = 0;
 
-        public ICollection<Reo> Reos { get; set; }
+        public ICollection<Reo> Reos { get; set; } // Relación con Reos
     }
 }
