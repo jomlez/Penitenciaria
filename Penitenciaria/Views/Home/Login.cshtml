@@ -33,32 +33,28 @@
 
 <script>
     document.getElementById("formLogin").addEventListener("submit", async function (e) {
-        e.preventDefault(); // Evita que la página se recargue
+        e.preventDefault(); 
 
-        // 1. Capturamos los datos
         const datos = {
             NombreUsuario: document.getElementById("txtUsuario").value,
             Contrasena: document.getElementById("txtPassword").value
         };
 
         try {
-            // 2. Enviamos los datos a TU API (la que probamos antes)
             const respuesta = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
             });
 
-            // 3. Verificamos la respuesta
             if (respuesta.ok) {
                 const resultado = await respuesta.json();
 
-                // GUARDAMOS EL TOKEN en el navegador para usarlo después
                 localStorage.setItem("tokenPenitenciaria", resultado.token);
                 localStorage.setItem("usuario", resultado.usuario);
 
                 alert("¡Bienvenido " + resultado.usuario + "!");
-                window.location.href = "/Home/Index"; // Redirigir al inicio
+                window.location.href = "/Home/Index";
             } else {
                 document.getElementById("mensajeError").innerText = "Usuario o contraseña incorrectos.";
                 document.getElementById("mensajeError").style.display = "block";
