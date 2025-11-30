@@ -46,5 +46,25 @@ namespace Penitenciaria.Controllers
 
             return Ok(new { mensaje = "Celda creada exitosamente" });
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            await _celdaRepositorio.EliminarAsync(id);
+            return Ok(new { mensaje = "Celda eliminada" });
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Editar(int id, [FromBody] CrearCeldaDto dto)
+        {
+            var celda = await _celdaRepositorio.ObtenerPorIdAsync(id);
+            if (celda == null) return NotFound("Celda no encontrada");
+
+            celda.NumeroCelda = dto.NumeroCelda;
+            celda.Capacidad = dto.Capacidad;
+
+            await _celdaRepositorio.ActualizarAsync(celda);
+            return Ok(new { mensaje = "Celda actualizada" });
+        }
     }
 }

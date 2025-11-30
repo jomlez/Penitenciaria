@@ -40,6 +40,7 @@
                         <th>Capacidad</th>
                         <th>Ocupación</th>
                         <th>Estado</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tablaCeldas">
@@ -51,12 +52,16 @@
 
 <script>
     const API_URL = '/api/celdas';
+    let rolUsuario = "";
 
     function obtenerToken() {
         return localStorage.getItem("tokenPenitenciaria");
     }
 
-    document.addEventListener("DOMContentLoaded", cargarCeldas);
+    document.addEventListener("DOMContentLoaded", function() {
+        rolUsuario = localStorage.getItem("rol");
+        cargarCeldas();
+    });
 
     async function cargarCeldas() {
         const token = obtenerToken();
@@ -84,6 +89,20 @@
                 const claseEstado = celda.ocupacionActual >= celda.capacidad ? "text-danger fw-bold" : "text-success";
                 const textoEstado = celda.ocupacionActual >= celda.capacidad ? "LLENA" : "DISPONIBLE";
 
+                let botonesAccion = "";
+                if (rolUsuario === "Administrador" || rolUsuario === "Admin") {
+                    botonesAccion = `
+                        <button class="btn btn-sm btn-danger" onclick="eliminarCelda(${celda.celdaID})" title="Eliminar">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="alert('Editar pendiente')" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    `;
+                } else {
+                    botonesAccion = `<span class="text-muted small">Solo lectura</span>`;
+                }
+
                 const fila = `
                     <tr>
                         <td>${celda.celdaID}</td>
@@ -91,13 +110,35 @@
                         <td>${celda.capacidad}</td>
                         <td>${celda.ocupacionActual}</td>
                         <td class="${claseEstado}">${textoEstado}</td>
+                        <td>${botonesAccion}</td>
                     </tr>
                 `;
                 tabla.innerHTML += fila;
             });
-
         } catch (error) {
             console.error("Error cargando celdas:", error);
+        }
+    }
+
+    async function eliminarCelda(id) {
+        if(!confirm("¿Estás seguro de eliminar esta celda?")) return;
+
+        const token = obtenerToken();
+        try {
+            const res = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if(res.ok) {
+                alert("Eliminado correctamente");
+                cargarCeldas();
+            } else {
+                const txt = await res.text();
+                alert("Error al eliminar: " + txt);
+            }
+        } catch (error) {
+            alert("Error de conexión");
         }
     }
 
@@ -126,7 +167,7 @@
                 alerta.innerText = "Celda agregada correctamente.";
                 alerta.style.display = "block";
                 document.getElementById("formCelda").reset();
-                cargarCeldas(); 
+                cargarCeldas();
             } else {
                 const errorTxt = await respuesta.text();
                 alerta.className = "alert alert-danger mt-3";

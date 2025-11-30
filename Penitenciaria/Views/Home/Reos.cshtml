@@ -52,7 +52,15 @@
         <div class="card-body">
             <h4>Población Penitenciaria</h4>
             <table class="table table-striped">
-                <thead><tr><th>Nombre</th><th>Celda</th><th>Sentencia</th><th>Estado</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Celda</th>
+                        <th>Sentencia</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
                 <tbody id="tablaReos"></tbody>
             </table>
         </div>
@@ -75,24 +83,27 @@
 
 <script>
     const token = localStorage.getItem("tokenPenitenciaria");
+    let rolUsuario = "";
 
     document.addEventListener("DOMContentLoaded", function() {
+        rolUsuario = localStorage.getItem("rol");
         cargarCombos();
         cargarReos();
     });
 
     async function cargarCombos() {
-        const resCeldas = await fetch('/api/celdas', { headers: { 'Authorization': 'Bearer ' + token } });
-        const celdas = await resCeldas.json();
-        const select = document.getElementById("selectCelda");
-        select.innerHTML = '<option value="">Seleccione Celda...</option>';
-        celdas.forEach(c => {
-            if(c.ocupacionActual < c.capacidad) {
-                select.innerHTML += `<option value="${c.celdaID}">${c.numeroCelda} (Libres: ${c.capacidad - c.ocupacionActual})</option>`;
-            }
-        });
-
-        cargarListaCrimenes();
+        try {
+            const resCeldas = await fetch('/api/celdas', { headers: { 'Authorization': 'Bearer ' + token } });
+            const celdas = await resCeldas.json();
+            const select = document.getElementById("selectCelda");
+            select.innerHTML = '<option value="">Seleccione Celda...</option>';
+            celdas.forEach(c => {
+                if(c.ocupacionActual < c.capacidad) {
+                    select.innerHTML += `<option value="${c.celdaID}">${c.numeroCelda} (Libres: ${c.capacidad - c.ocupacionActual})</option>`;
+                }
+            });
+            cargarListaCrimenes();
+        } catch(e) { console.error(e); }
     }
 
     async function cargarListaCrimenes() {
@@ -158,8 +169,7 @@
             document.getElementById("formReo").reset();
         } else {
             const mensajeError = await res.text();
-            console.error(mensajeError);
-            alert("Error del servidor: " + mensajeError); 
+            alert("Error del servidor: " + mensajeError);
         }
     });
 
@@ -168,8 +178,47 @@
         const reos = await res.json();
         const tabla = document.getElementById("tablaReos");
         tabla.innerHTML = "";
+
         reos.forEach(r => {
-            tabla.innerHTML += `<tr><td>${r.nombreCompleto}</td><td>${r.celda}</td><td>${r.sentencia} años</td><td>${r.estado}</td></tr>`;
+            let botonesAccion = "";
+            if (rolUsuario === "Administrador" || rolUsuario === "Admin") {
+                botonesAccion = `
+                    <button class="btn btn-sm btn-danger" onclick="eliminarReo(${r.reoID})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="alert('Pendiente')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                `;
+            } else {
+                botonesAccion = `<span class="text-muted small">Solo lectura</span>`;
+            }
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>${r.nombreCompleto}</td>
+                    <td>${r.celda}</td>
+                    <td>${r.sentencia} años</td>
+                    <td>${r.estado}</td>
+                    <td>${botonesAccion}</td>
+                </tr>`;
         });
+    }
+
+    async function eliminarReo(id) {
+        if(!confirm("¿Seguro que desea eliminar a este reo?")) return;
+
+        try {
+            const res = await fetch(`/api/reos/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if(res.ok) {
+                alert("Reo eliminado");
+                cargarReos();
+            } else {
+                alert("Error al eliminar");
+            }
+        } catch(e) { alert("Error de conexión"); }
     }
 </script>

@@ -34,5 +34,20 @@ namespace Penitenciaria.Repositorios
             await _contexto.SaveChangesAsync();
             return celda;
         }
+        public async Task EliminarAsync(int id)
+        {
+            var celda = await _contexto.Celdas.FindAsync(id);
+            if (celda != null)
+            {
+                _contexto.Celdas.Remove(celda);
+                await _contexto.SaveChangesAsync();
+            }
+        }
+
+        public async Task ActualizarAsync(Celda celda)
+        {
+            _contexto.Celdas.Update(celda);
+            await _contexto.SaveChangesAsync();
+        }
     }
 }
